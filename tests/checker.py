@@ -22,11 +22,23 @@ def check(testname):
     """
     with subprocess.Popen([os.path.join(src, "serial"), testname],
             stdout=subprocess.PIPE) as proc_serial_res:
-        serial_out = str(proc_serial_res.stdout.read()).strip("\n")
+        try:
+            outs, _ = proc_serial_res.communicate(timeout=3)
+            serial_out = str(outs).strip("\n")
+        except subprocess.TimeoutExpired:
+            proc_serial_res.kill()
+            outs, _ = proc_serial_res.communicate()
+            serial_out = ""
     for _ in range(0, 100):
         with subprocess.Popen([os.path.join(src, "parallel"), testname],
                 stdout=subprocess.PIPE) as proc_parallel_res:
-            parallel_out = str(proc_parallel_res.stdout.read()).strip("\n")
+            try:
+                outs, _ = proc_parallel_res.communicate(timeout=3)
+                parallel_out = str(outs).strip("\n")
+            except subprocess.TimeoutExpired:
+                proc_parallel_res.kill()
+                outs, _ = proc_parallel_res.communicate()
+                parallel_out = ""
             if serial_out != parallel_out:
                 return False
 
