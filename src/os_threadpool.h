@@ -1,32 +1,36 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
-
 #ifndef __OS_THREADPOOL_H__
-#define __OS_THREADPOOL_H__	1
+#define __OS_THREADPOOL_H__ 1
 
 #include <pthread.h>
 #include "os_list.h"
 
 typedef struct {
-	void *argument;
-	void (*action)(void *arg);
-	void (*destroy_arg)(void *arg);
-	os_list_node_t list;
+    void *argument;
+    void (*action)(void *arg);
+    void (*destroy_arg)(void *arg);
+    os_list_node_t list;
 } os_task_t;
 
 typedef struct os_threadpool {
-	unsigned int num_threads;
-	pthread_t *threads;
+    unsigned int num_threads;
+    pthread_t *threads;
 
-	/*
-	 * Head of queue used to store tasks.
-	 * First item is head.next, if head.next != head (i.e. if queue
-	 * is not empty).
-	 * Last item is head.prev, if head.prev != head (i.e. if queue
-	 * is not empty).
-	 */
-	os_list_node_t head;
+    /*
+     * Head of queue used to store tasks.
+     * First item is head.next, if head.next != head (i.e. if queue
+     * is not empty).
+     * Last item is head.prev, if head.prev != head (i.e. if queue
+     * is not empty).
+     */
+    os_list_node_t head;
 
-	/* TODO: Define threapool / queue synchronization data. */
+    /* Thread pool synchronization data */
+    pthread_mutex_t lock;
+    pthread_cond_t task_available;
+
+    int running_threads;
+    int stop;
+
 } os_threadpool_t;
 
 os_task_t *create_task(void (*f)(void *), void *arg, void (*destroy_arg)(void *));
